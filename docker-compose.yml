@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  # ─── PostgreSQL Database ─────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine     # alpine: image nhỏ gọn hơn, không có tool thừa
+    container_name: nestmart_postgres
+    restart: unless-stopped       # tự khởi động lại trừ khi bị tắt thủ công
+    environment:
+      POSTGRES_DB: nestmart
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - '5432:5432'               # host:container — map port ra máy host
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  # persist data khi container restart
+    networks:
+      - nestmart_network
+    healthcheck:                  # healthcheck: kiểm tra DB đã sẵn sàng chưa
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Redis Cache & Queue ─────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: nestmart_redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    networks:
+      - nestmart_network
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: redis-server --appendonly yes  # appendonly: bật persistence cho Redis
+
+  # ─── NestJS App (Production) ─────────────────────────────────────
+  # Uncomment khi muốn chạy toàn bộ stack bằng Docker
+  # app:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: nestmart_app
+  #   restart: unless-stopped
+  #   ports:
+  #     - '3000:3000'
+  #   env_file:
+  #     - .env
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   networks:
+  #     - nestmart_network
+
+# Named volumes: Docker quản lý, data tồn tại kể cả khi container bị xoá
+volumes:
+  postgres_data:
+  redis_data:
+
+# Network: các container trong cùng network giao tiếp được với nhau qua tên service
+networks:
+  nestmart_network:
+    driver: bridge

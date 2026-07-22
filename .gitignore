@@ -1,0 +1,112 @@
+# =========================
+# Dependencies
+# =========================
+node_modules/
+
+# =========================
+# Build output
+# =========================
+dist/
+build/
+coverage/
+.nyc_output/
+
+# =========================
+# Environment variables
+# =========================
+.env
+.env.*
+!.env.example
+
+# =========================
+# Logs
+# =========================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# =========================
+# Runtime
+# =========================
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# =========================
+# Cache
+# =========================
+.cache/
+.tmp/
+temp/
+.tmp
+
+# =========================
+# TypeScript
+# =========================
+*.tsbuildinfo
+
+# =========================
+# IDE
+# =========================
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# =========================
+# Operating System
+# =========================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# =========================
+# Docker
+# =========================
+docker-data/
+postgres_data/
+redis_data/
+
+# =========================
+# Testing
+# =========================
+coverage/
+.junit.xml
+
+# =========================
+# NestJS CLI
+# =========================
+dist-ssr/
+
+# =========================
+# Temporary files
+# =========================
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# =========================
+# Claude Code
+# =========================
+.claude/
+CLAUDE.local.md
+
+# =========================
+# AI / Generated files
+# =========================
+project-tree.txt
+project-files.txt
+
+# =========================
+# Misc
+# =========================
+*.bak
+*.old
+*.orig
