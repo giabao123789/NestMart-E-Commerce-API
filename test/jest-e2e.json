@@ -5,5 +5,7 @@
   "testRegex": ".e2e-spec.ts$",
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
-  }
+  },
+  "setupFilesAfterFramework": ["<rootDir>/jest-setup.ts"],
+  "testTimeout": 30000
 }
