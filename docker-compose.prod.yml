@@ -1,0 +1,118 @@
+version: '3.8'
+
+# Docker Compose production: chạy toàn bộ stack
+# PostgreSQL + Redis + NestJS App
+# Khác docker-compose.yml (dev): có app service, có resource limits, có restart policy
+
+services:
+  # ─── PostgreSQL Database ──────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: nestmart_postgres_prod
+    restart: always    # always: luôn restart kể cả khi server reboot
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - nestmart_network
+    # deploy.resources: giới hạn tài nguyên
+    # Tránh 1 service chiếm hết CPU/RAM của server
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          memory: 256M
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${DB_USERNAME} -d ${DB_NAME}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ─── Redis ───────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: nestmart_redis_prod
+    restart: always
+    command: >
+      redis-server
+      --appendonly yes
+      --requirepass ${REDIS_PASSWORD}
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+    # maxmemory-policy allkeys-lru:
+    # Khi Redis đầy memory → tự xoá key ít dùng nhất (LRU = Least Recently Used)
+    volumes:
+      - redis_data:/data
+    networks:
+      - nestmart_network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    healthcheck:
+      test: ['CMD', 'redis-cli', '-a', '${REDIS_PASSWORD}', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── NestJS Application ──────────────────────────────────────────
+  app:
+    # build: build từ Dockerfile trong thư mục hiện tại
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    image: nestmart:latest
+    container_name: nestmart_app_prod
+    restart: always
+    ports:
+      - '${PORT:-3000}:3000'
+    # env_file: load biến môi trường từ file .env
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      DB_HOST: postgres        # dùng tên service thay vì IP
+      REDIS_HOST: redis
+    # depends_on: đợi services này healthy trước khi start app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - nestmart_network
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          memory: 256M
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:3000/api/health || exit 1']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    # logging: cấu hình Docker logging driver
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'  # mỗi log file tối đa 10MB
+        max-file: '3'    # giữ tối đa 3 log files
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  nestmart_network:
+    driver: bridge

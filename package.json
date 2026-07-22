@@ -20,7 +20,13 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
 
     "test:e2e": "jest --config ./test/jest-e2e.json --runInBand --forceExit",
-    "test:e2e:watch": "jest --config ./test/jest-e2e.json --watch"
+    "test:e2e:watch": "jest --config ./test/jest-e2e.json --watch",
+
+    "seed": "ts-node -r tsconfig-paths/register src/database/seeds/seed.ts",
+    "seed:prod": "node dist/database/seeds/seed.js",
+    "docker:dev": "docker compose up -d",
+    "docker:prod": "docker compose -f docker-compose.prod.yml up -d --build",
+    "docker:down": "docker compose down"
   },
   "dependencies": {
     "@nestjs/bullmq": "^11.0.4",
@@ -85,15 +91,11 @@
       "json",
       "ts"
     ],
-
     "rootDir": "src",
-
     "testRegex": ".*\\.spec\\.ts$",
-
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },
-
     "collectCoverageFrom": [
       "**/*.(t|j)s",
       "!**/*.spec.ts",
@@ -103,9 +105,7 @@
       "!**/main.ts",
       "!**/*.module.ts"
     ],
-
     "coverageDirectory": "../coverage",
-
     "coverageThreshold": {
       "global": {
         "branches": 60,
@@ -114,11 +114,9 @@
         "statements": 60
       }
     },
-
     "moduleNameMapper": {
       "^src/(.*)$": "<rootDir>/$1"
     },
-
     "testEnvironment": "node"
   }
 }
